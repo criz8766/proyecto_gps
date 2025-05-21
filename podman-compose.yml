@@ -56,7 +56,16 @@ services:
     ports:
       - "8000:8000"
 
+  frontend: # <-- NUEVO SERVICIO
+    build:
+      context: ./frontend # Ruta a la carpeta donde está el Dockerfile del frontend
+    container_name: frontend
+    ports:
+      - "3000:80" # Expone el puerto 80 del contenedor Nginx al puerto 3000 de tu máquina host
+                  # Puedes elegir otro puerto host si el 3000 está ocupado, ej. "8081:80"
+    depends_on:
+      - pacientes # Opcional, pero asegura que el backend se inicie antes, aunque no es estrictamente necesario para servir archivos estáticos.
+
 volumes:
   pgdata:
   mongodata:
-
