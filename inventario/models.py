@@ -13,3 +13,10 @@ class Producto(Base):
     cantidad = Column(Integer)
     precio_unitario = Column(Float)
     fecha_ingreso = Column(Date, default=datetime.date.today)
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
