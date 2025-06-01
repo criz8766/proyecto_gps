@@ -55,6 +55,17 @@ services:
       - ./pacientes/.env
     ports:
       - "8000:8000"
+  inventario:
+    build:
+      context: ./inventario
+    container_name: inventario
+    depends_on:
+      - postgres
+      - kafka
+    env_file:
+      - ./inventario/.env
+    ports:
+      - "8001:8001"
 
   frontend: # <-- NUEVO SERVICIO
     build:
