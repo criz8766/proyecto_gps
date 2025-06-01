@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pymongo
+kafka-python
+python-jose[cryptography]
+httpx
+python-dotenv
+openpyxl
+pandas
