@@ -1,0 +1,91 @@
+// farmacia-sga/pacientes/Jenkinsfile
+pipeline {
+    agent any // Ejecutar en cualquier agente disponible (en nuestro caso, el controlador Jenkins mismo)
+
+    environment {
+        // Podrías definir variables de entorno aquí si las necesitas para el build
+        // Por ejemplo, el nombre de la imagen a construir
+        IMAGE_NAME = "localhost/farmacia-sga_pacientes_jenkins_build" // Un nombre diferente para la imagen construida por Jenkins
+        TAG_NAME = "ci-${env.BUILD_NUMBER}" // Etiqueta con el número de build de Jenkins
+        DOCKERFILE_PATH = "./pacientes/Dockerfile" // Ruta al Dockerfile relativa a la raíz del repo
+        BUILD_CONTEXT = "./pacientes" // Contexto para el build, relativo a la raíz del repo
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Obteniendo el código desde Git...'
+                // Asumiendo que el job en Jenkins está configurado para clonar el repo
+                // Si no, usarías: git url: 'URL_DE_TU_REPO_GIT'
+                checkout scm 
+            }
+        }
+
+        stage('Build Image with Podman') {
+            steps {
+                script {
+                    // Usar sh para ejecutar comandos de shell.
+                    // Asegúrate de que el usuario jenkins dentro del contenedor tenga permisos
+                    // o que el podman que instalamos como root sea accesible.
+                    // Esto podría necesitar ajustes si el podman no está en el PATH del usuario jenkins
+                    // o si hay problemas de permisos con el socket de Podman (si se usara).
+
+                    echo "Construyendo imagen Podman: ${IMAGE_NAME}:${TAG_NAME}"
+                    // Intentamos llamar a podman directamente.
+                    // Si el podman instalado como root no está en el PATH del usuario jenkins, esto fallará.
+                    // O si el usuario jenkins no puede acceder al almacenamiento de podman root.
+
+                    // Para que el usuario jenkins (dentro del contenedor) pueda usar el podman 
+                    // instalado como root, podríamos necesitar 'sudo podman' o ajustar permisos/grupos.
+                    // Vamos a intentar con 'podman' directamente primero.
+                    // El Dockerfile está en ./pacientes/Dockerfile relativo a la raíz del workspace de Jenkins
+                    // El contexto de build es ./pacientes
+
+                    // Si el Jenkinsfile está en farmacia-sga/pacientes/, el contexto y Dockerfile son relativos a esa carpeta
+                    // Si el Jenkinsfile está en farmacia-sga/ y clona todo el repo, las rutas deben ajustarse.
+                    // Asumamos que el workspace de Jenkins es la raíz de farmacia-sga/
+
+                    sh "podman build -t ${IMAGE_NAME}:${TAG_NAME} -f ${DOCKERFILE_PATH} ${BUILD_CONTEXT}"
+                    echo "Imagen construida: ${IMAGE_NAME}:${TAG_NAME}"
+                }
+            }
+        }
+
+        // ---- Etapas Futuras (Opcionales por ahora) ----
+        /*
+        stage('Test Image') {
+            steps {
+                echo 'Ejecutando pruebas en la imagen (si aplica)...'
+                // Aquí podrías correr el contenedor y ejecutar pruebas dentro de él
+            }
+        }
+
+        stage('Push Image') {
+            when {
+                branch 'main' // Solo empujar si es la rama main, por ejemplo
+            }
+            steps {
+                echo "Empujando imagen ${IMAGE_NAME}:${TAG_NAME} al registro..."
+                // Aquí irían los comandos para login a un registro (Harbor, ACR, Docker Hub)
+                // y luego 'podman push ...'
+                // sh "podman login -u USER -p PASS registry.example.com"
+                // sh "podman push ${IMAGE_NAME}:${TAG_NAME}"
+            }
+        }
+        */
+    }
+
+    post {
+        always {
+            echo 'Pipeline finalizado.'
+            // Limpiar el workspace si es necesario
+            // cleanWs() 
+        }
+        success {
+            echo '¡Pipeline ejecutado exitosamente!'
+        }
+        failure {
+            echo '¡Pipeline falló!'
+        }
+    }
+}
